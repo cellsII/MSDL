@@ -30,4 +30,7 @@ You will then be asked to authenticate
   <li>Paste the bearer token into the app as your login.</li>
   <li>Authorization tokens expire, so every now and then the app will tell you to get a new one following the same process listed above.</li>
 </ol>
+![authTHing](https://github.com/user-attachments/assets/008795d3-2245-4ed1-a1c5-7403e6b921ec)
+
+
 
