@@ -1,5 +1,3 @@
-#Installation
-
 <h1>Downloading App</h1>
 <p>Your app may get flagged by your browser and windows defender as being a Trojan horse virus. To get around this, you will have to enable the 
 app in windows defender once it is downloaded, otherwise windows will try to delete it.
