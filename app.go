@@ -8,14 +8,24 @@ import (
 	"log"
 	Megascans "megascansDownloader/megascans"
 	"os"
+	"path/filepath"
 	"strings"
 )
-
-const downloadConfigPath = "./downloadedContent.json"
 
 type Config struct {
 	DownloadsFolder     string                   `json:"downloadsFolder"`
 	SuccessfulDownloads Megascans.AcquiredAssets `json:"SuccessfulDownloads"`
+}
+
+func getConfigPath() string {
+	executable, err := os.Executable()
+	if err != nil {
+		fmt.Println("Could not determine executable path for this application")
+		log.Fatal(err)
+	}
+	const configLocation = "downloadedContent.json"
+	configFilePath := filepath.Join(filepath.Dir(executable), configLocation)
+	return configFilePath
 }
 
 func textPrompt(promptText string) (*string, error) {
@@ -47,12 +57,12 @@ func createDownloadConfigFile() error {
 		fmt.Println("Failed to get base download config")
 		return err
 	}
-	baseConfigJSON, err := json.Marshal(*baseConfig)
+	baseConfigJSON, err := json.MarshalIndent(*baseConfig, "", "    ")
 	if err != nil {
 		fmt.Println("Failed to marshal base download config json")
 		return err
 	}
-	downloadConfig, err := os.Create(downloadConfigPath)
+	downloadConfig, err := os.Create(getConfigPath())
 	defer downloadConfig.Close()
 	if err != nil {
 		fmt.Println("Error creating download config file")
@@ -66,9 +76,13 @@ func createDownloadConfigFile() error {
 	return nil
 }
 func getDownloadConfigFileData() (*Config, error) {
-	downloadConfig, err := os.ReadFile(downloadConfigPath)
+	downloadConfig, err := os.ReadFile(getConfigPath())
 	if os.IsNotExist(err) {
 		err := createDownloadConfigFile()
+		if err != nil {
+			return nil, err
+		}
+		downloadConfig, err = os.ReadFile(getConfigPath())
 		if err != nil {
 			return nil, err
 		}
@@ -79,9 +93,10 @@ func getDownloadConfigFileData() (*Config, error) {
 	var downloadConfigStruct Config
 	err = json.Unmarshal(downloadConfig, &downloadConfigStruct)
 	if err != nil {
-		fmt.Println("Error unmarshalling download config file")
+		fmt.Printf("Error unmarshalling download config file %v \n", err)
 		return nil, err
 	}
+
 	return &downloadConfigStruct, nil
 }
 
@@ -90,13 +105,17 @@ func addAssetToSuccessfulDownloads(asset Megascans.AcquiredAsset) error {
 	if err != nil {
 		return err
 	}
-	configData.SuccessfulDownloads = append(configData.SuccessfulDownloads, asset)
+	if len(configData.SuccessfulDownloads) > 0 {
+		configData.SuccessfulDownloads = append(configData.SuccessfulDownloads, asset)
+	} else {
+		configData.SuccessfulDownloads = []Megascans.AcquiredAsset{asset}
+	}
 	configDataJSON, err := json.MarshalIndent(configData, "", "    ")
 	if err != nil {
 		fmt.Println("Error marshalling json for config file")
 		return err
 	}
-	err = ioutil.WriteFile(downloadConfigPath, configDataJSON, 0644)
+	err = ioutil.WriteFile(getConfigPath(), configDataJSON, 0644)
 	if err != nil {
 		fmt.Println("Error writing json to file")
 	}
@@ -129,8 +148,11 @@ func isAlreadyDownloaded(asset Megascans.AcquiredAsset) (bool, error) {
 
 func main() {
 	//Just using this to verify config data
-	config, err := getDownloadConfigFileData()
-	downloadFolder := config.DownloadsFolder
+	configData, err := getDownloadConfigFileData()
+	if err != nil {
+		fmt.Printf("Error getting download config data %v", err)
+		log.Fatal(err)
+	}
 
 	if err != nil {
 		log.Fatal(err)
@@ -168,7 +190,7 @@ func main() {
 	for i, asset := range needsToBeDownloaded {
 		fmt.Printf("--------%v--------\n", asset.AssetID)
 		fmt.Printf("Downloading asset %v of %v\n", i+1, len(needsToBeDownloaded))
-		downloadedFile, err := user.DownloadAsset(asset, downloadFolder)
+		downloadedFile, err := user.DownloadAsset(asset, configData.DownloadsFolder)
 		if err != nil {
 			log.Fatal(err)
 		}

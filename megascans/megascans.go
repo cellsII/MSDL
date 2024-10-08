@@ -255,7 +255,7 @@ func (u *User) DownloadAsset(asset AcquiredAsset, downloadsFolder string) (*stri
 		fmt.Println("Error unmarshalling response from download payload")
 		return nil, err
 	}
-	zipData, err := requestDownload(p.Id)
+	zipData, err := requestDownload(u, p.Id)
 	if err != nil {
 		fmt.Println("Error downloading asset")
 		return nil, err
@@ -268,29 +268,32 @@ func (u *User) DownloadAsset(asset AcquiredAsset, downloadsFolder string) (*stri
 	return &fp, nil
 }
 
-func requestDownload(downloadId string) (*[]byte, error) {
+func requestDownload(u *User, downloadId string) (*[]byte, error) {
 	time.Sleep(1 * time.Second)
 	fmt.Println("Requesting Download")
 	client := &http.Client{}
 	downloadURL := fmt.Sprintf(
-		"http://downloadp.megascans.se/download/"+
+		"https://assetdownloads.quixel.com/download/"+
 			"%s"+
-			"?url=https%%3A%%2F%%2Fmegascans.se%%2Fv1%%2Fdownloads",
+			"?preserveStructure=true&url=https%%3A%%2F%%2Fquixel.com%%2Fv1%%2Fdownloads",
 		downloadId,
 	)
 	req, err := http.NewRequest("GET", downloadURL, nil)
 	if err != nil {
 		return nil, err
 	}
+	// This accept encoding type might help fix eof errors
+	req.Header.Set("Accept-Encoding", "identity")
+	req.Header.Set("Authorization", u.AuthenticationToken)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New("Error making request to download asset" + resp.Status)
 	}
 	body, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
 	if err != nil {
 		fmt.Println("Error reading download body")
 		return nil, err
