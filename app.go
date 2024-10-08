@@ -188,6 +188,15 @@ func main() {
 	}
 	fmt.Printf("\nDOWNLOADING %v Assets\n", len(needsToBeDownloaded))
 	for i, asset := range needsToBeDownloaded {
+		// Every 4 assets, check to make sure we are still authenticated
+		// to avoid spamming the server thousands of times.
+		if i%4 == 0 {
+			fmt.Printf("Routine Validation Check %v iteration\n", i)
+			err := user.Authenticate()
+			if err != nil {
+				log.Fatal("Authentication failed, please reset your token.", err)
+			}
+		}
 		fmt.Printf("--------%v--------\n", asset.AssetID)
 		fmt.Printf("Downloading asset %v of %v\n", i+1, len(needsToBeDownloaded))
 		downloadedFile, err := user.DownloadAsset(asset, configData.DownloadsFolder)

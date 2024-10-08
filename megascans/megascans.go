@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -234,6 +235,10 @@ func (u *User) DownloadAsset(asset AcquiredAsset, downloadsFolder string) (*stri
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized {
+		log.Fatal("UNAUTHORIZED: Most likely your token just expired, "+
+			"so update that and then rerun the application ", resp.StatusCode, resp.Status)
 	}
 	if resp == nil {
 		return nil, errors.New("No download payload found, most likely quixel deleted this asset.")
