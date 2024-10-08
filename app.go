@@ -191,8 +191,9 @@ func main() {
 		fmt.Printf("--------%v--------\n", asset.AssetID)
 		fmt.Printf("Downloading asset %v of %v\n", i+1, len(needsToBeDownloaded))
 		downloadedFile, err := user.DownloadAsset(asset, configData.DownloadsFolder)
-		if err != nil {
-			log.Fatal(err)
+		if err != nil || downloadedFile == nil {
+			fmt.Printf("Error downloading asset %v of %v\n", i+1, len(needsToBeDownloaded))
+			continue
 		}
 		fmt.Println("SUCCESSFULLY DOWNLOADED: ", *downloadedFile)
 		fmt.Println("Writing to successful downloads")

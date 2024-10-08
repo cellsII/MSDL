@@ -215,7 +215,7 @@ func (u *User) DownloadAsset(asset AcquiredAsset, downloadsFolder string) (*stri
 	fmt.Println("Initiating download")
 	client := &http.Client{}
 	payload := NewDownloadManifest(asset)
-	jsonPayload, err := json.Marshal(*payload)
+	jsonPayload, err := json.MarshalIndent(*payload, "", "    ")
 	if err != nil {
 		fmt.Println("Error marshalling payload")
 		return nil, err
@@ -235,9 +235,14 @@ func (u *User) DownloadAsset(asset AcquiredAsset, downloadsFolder string) (*stri
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	if resp == nil {
+		return nil, errors.New("No download payload found, most likely quixel deleted this asset.")
+	}
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Error making request for download payload")
+		fmt.Printf("Error making request for download payload %v\n", resp.Status)
+		if resp.StatusCode == http.StatusBadRequest {
+			fmt.Printf(string(jsonPayload))
+		}
 		return nil, err
 	}
 	body, err := io.ReadAll(resp.Body)
@@ -245,7 +250,10 @@ func (u *User) DownloadAsset(asset AcquiredAsset, downloadsFolder string) (*stri
 		fmt.Println("Error reading response from download payload")
 		return nil, err
 	}
-
+	// If megascans returns a nil body, it must not be dereferenced.
+	if resp.Body != nil {
+		resp.Body.Close()
+	}
 	type Payload struct {
 		Id string `json:"id"`
 	}
