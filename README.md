@@ -1,3 +1,5 @@
+<h1>What It Does</h1>
+<p>This app allows you to automatically download megascans content which you have already purchased into a folder of your choosing</p>
 <h1>Downloading App</h1>
 <p>Your app may get flagged by your browser and windows defender as being a Trojan horse virus. To get around this, you will have to enable the 
 app in windows defender once it is downloaded, otherwise windows will try to delete it.
