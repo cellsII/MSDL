@@ -163,8 +163,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	user.TestEmail()
-
 	err = user.Authenticate()
 	if err != nil {
 		log.Fatal(err)

@@ -81,14 +81,6 @@ func NewUser() (*User, error) {
 	}, nil
 }
 
-func (u *User) SayHello() {
-	fmt.Println("HELLOOOOO")
-}
-func (u *User) TestEmail() {
-	x := fmt.Sprintf("https://accounts.quixel.com/api/v1/users/%s", u.email)
-	fmt.Println(x)
-}
-
 func (u *User) Authenticate() error {
 	time.Sleep(1 * time.Second)
 	fmt.Println("Authenticating...")
@@ -126,12 +118,16 @@ func (u *User) Authenticate() error {
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		fmt.Println(resp.Status)
 		if u.previouslyAuthenticated {
-			email, err := EmailPrompt()
+			// If previously authenticated, no need to ask again
+			// for email again, since most likely it is a token
+			// which has expired
+			token, err := AuthTokenPrompt()
 			if err != nil {
 				return err
 			}
-			u.email = *email
+			u.AuthenticationToken = *token
 		} else {
+			//  If not already authenticated, we need email + auth token.
 			token, err := AuthTokenPrompt()
 			if err != nil {
 				return err
